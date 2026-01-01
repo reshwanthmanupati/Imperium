@@ -1,0 +1,223 @@
+# Intent Grammar - Natural Language Processing Rules
+# Defines patterns and rules for parsing user intents
+
+# Intent Types
+intent_types:
+  - priority
+  - bandwidth
+  - latency
+  - qos
+  - reliability
+  - power_saving
+  - security
+
+# Pattern Definitions for Intent Parsing
+patterns:
+  # Priority Intents
+  priority:
+    keywords:
+      - prioritize
+      - critical
+      - important
+      - urgent
+      - high priority
+      - boost
+      - favor
+
+    patterns:
+      - regex: "prioritize\\s+(?:device|node)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "make\\s+(\\S+)\\s+(?:high|critical)\\s+priority"
+        extract: device_id
+
+      - regex: "(?:set|change)\\s+priority\\s+(?:of|for)\\s+(\\S+)\\s+to\\s+(\\d+)"
+        extract: [device_id, priority_level]
+
+      - regex: "critical\\s+traffic\\s+(?:for|from)\\s+(\\S+)"
+        extract: device_id
+
+  # Bandwidth Intents
+  bandwidth:
+    keywords:
+      - bandwidth
+      - limit
+      - throttle
+      - allocate
+      - restrict
+      - cap
+
+    patterns:
+      - regex: "limit\\s+bandwidth\\s+(?:to|at)\\s+(\\d+)\\s*(mbps|kbps|gbps)?"
+        extract: [bandwidth_value, bandwidth_unit]
+
+      - regex: "allocate\\s+(\\d+)\\s*(mbps|kbps)\\s+(?:to|for)\\s+(\\S+)"
+        extract: [bandwidth_value, bandwidth_unit, device_id]
+
+      - regex: "throttle\\s+(\\S+)\\s+to\\s+(\\d+)\\s*(mbps|kbps)?"
+        extract: [device_id, bandwidth_value, bandwidth_unit]
+
+      - regex: "(?:set|cap)\\s+bandwidth\\s+(?:for|of)\\s+(\\S+)\\s+at\\s+(\\d+)"
+        extract: [device_id, bandwidth_value]
+
+  # Latency Intents
+  latency:
+    keywords:
+      - latency
+      - delay
+      - response time
+      - lag
+      - minimize
+      - reduce
+      - faster
+
+    patterns:
+      - regex: "reduce\\s+latency\\s+(?:to|below)\\s+(\\d+)\\s*ms"
+        extract: latency_target
+
+      - regex: "latency\\s+(?:under|below)\\s+(\\d+)"
+        extract: latency_threshold
+
+      - regex: "minimize\\s+latency\\s+(?:for|of)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "make\\s+(\\S+)\\s+(?:faster|low.latency)"
+        extract: device_id
+
+  # QoS Intents
+  qos:
+    keywords:
+      - qos
+      - quality
+      - reliable
+      - guaranteed
+      - service level
+
+    patterns:
+      - regex: "(?:set|use)\\s+qos\\s+(?:level)?\\s*(\\d+)"
+        extract: qos_level
+
+      - regex: "quality\\s+of\\s+service\\s+(\\d+)\\s+(?:for|to)\\s+(\\S+)"
+        extract: [qos_level, device_id]
+
+      - regex: "reliable\\s+delivery\\s+(?:for|to)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "guarantee\\s+delivery\\s+(?:for|from)\\s+(\\S+)"
+        extract: device_id
+
+  # Reliability Intents
+  reliability:
+    keywords:
+      - reliable
+      - ensure
+      - guarantee
+      - no loss
+      - critical path
+
+    patterns:
+      - regex: "ensure\\s+(?:reliable|guaranteed)\\s+(?:delivery|transmission)\\s+(?:for|from)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "no\\s+(?:packet|message)\\s+loss\\s+(?:for|from)\\s+(\\S+)"
+        extract: device_id
+
+  # Power Saving Intents
+  power_saving:
+    keywords:
+      - power saving
+      - energy
+      - battery
+      - sleep
+      - reduce power
+      - conserve
+
+    patterns:
+      - regex: "(?:enable|activate)\\s+power\\s+saving\\s+(?:for|on)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "reduce\\s+(?:power|energy)\\s+(?:consumption\\s+)?(?:for|of)\\s+(\\S+)"
+        extract: device_id
+
+      - regex: "extend\\s+battery\\s+(?:life\\s+)?(?:for|of)\\s+(\\S+)"
+        extract: device_id
+
+# Device Target Patterns
+device_targets:
+  single_device:
+    - regex: "(?:device|node|sensor|camera)[-_]?(\\w+)"
+      extract: device_id
+
+  multiple_devices:
+    - regex: "(\\S+)\\s+and\\s+(\\S+)"
+      extract: device_list
+
+    - regex: "all\\s+(\\w+)\\s+(?:devices|nodes|sensors)"
+      extract: device_type
+
+    - regex: "(?:devices|nodes)\\s+in\\s+(\\w+)"
+      extract: location
+
+# Value Extraction Rules
+value_extraction:
+  bandwidth:
+    units: [mbps, kbps, gbps, mb/s, kb/s, gb/s]
+    default_unit: mbps
+    conversions:
+      kbps: 0.001 # to mbps
+      gbps: 1000 # to mbps
+
+  latency:
+    units: [ms, milliseconds, seconds, s]
+    default_unit: ms
+    conversions:
+      seconds: 1000 # to ms
+      s: 1000
+
+  priority:
+    scale: [1, 10]
+    keywords:
+      low: 2
+      medium: 5
+      high: 8
+      critical: 10
+      urgent: 9
+
+# Compound Intent Patterns
+compound_patterns:
+  priority_and_bandwidth:
+    - "prioritize (\\S+) and limit bandwidth to (\\d+)"
+    - "high priority for (\\S+) with (\\d+) mbps"
+
+  latency_and_qos:
+    - "low latency and qos (\\d+) for (\\S+)"
+    - "reduce latency and ensure reliable delivery for (\\S+)"
+
+# Default Values
+defaults:
+  priority_level: 5
+  qos_level: 1
+  bandwidth_unit: "mbps"
+  latency_unit: "ms"
+  sampling_rate: 10 # seconds
+
+# Validation Rules
+validation:
+  priority:
+    min: 1
+    max: 10
+
+  qos:
+    allowed_values: [0, 1, 2]
+
+  bandwidth:
+    min: 0.1 # mbps
+    max: 1000 # mbps
+
+  latency:
+    min: 1 # ms
+    max: 5000 # ms
+
+  sampling_rate:
+    min: 1 # seconds
+    max: 3600 # seconds

@@ -1,0 +1,214 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "imperium-overview",
+    "title": "Imperium - System Overview",
+    "tags": ["imperium", "ibn", "overview"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "type": "graph",
+        "title": "Intent Satisfaction Rate",
+        "targets": [
+          {
+            "expr": "ibs_intent_satisfaction_ratio",
+            "legendFormat": "Satisfaction Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "percentunit", "min": 0, "max": 1 },
+          { "format": "short" }
+        ],
+        "xaxis": { "mode": "time" },
+        "fill": 1,
+        "linewidth": 2,
+        "thresholds": [
+          {
+            "value": 0.95,
+            "colorMode": "critical",
+            "op": "lt",
+            "fill": true,
+            "line": true
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "type": "graph",
+        "title": "Policy Enforcement Latency",
+        "targets": [
+          {
+            "expr": "ibs_policy_enforcement_latency_seconds",
+            "legendFormat": "Enforcement Time",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "s", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": { "params": [0.5], "type": "gt" },
+              "query": { "params": ["A", "5m", "now"] }
+            }
+          ],
+          "name": "High Policy Enforcement Latency"
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+        "type": "graph",
+        "title": "IoT Node Message Rate",
+        "targets": [
+          {
+            "expr": "rate(iot_messages_sent_total[1m])",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "ops", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "legend": { "show": true, "values": true, "current": true }
+      },
+      {
+        "id": 4,
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+        "type": "graph",
+        "title": "Network Latency by Device",
+        "targets": [
+          {
+            "expr": "iot_latency_ms",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "ms", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "thresholds": [
+          { "value": 100, "colorMode": "warning", "op": "gt", "line": true },
+          { "value": 200, "colorMode": "critical", "op": "gt", "line": true }
+        ]
+      },
+      {
+        "id": 5,
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+        "type": "graph",
+        "title": "Bandwidth Usage",
+        "targets": [
+          {
+            "expr": "iot_bandwidth_bytes",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "bytes", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "stack": true
+      },
+      {
+        "id": 6,
+        "gridPos": { "h": 6, "w": 6, "x": 0, "y": 16 },
+        "type": "stat",
+        "title": "Active Intents",
+        "targets": [
+          {
+            "expr": "count(ibs_intent_active)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": { "h": 6, "w": 6, "x": 6, "y": 16 },
+        "type": "stat",
+        "title": "Active Policies",
+        "targets": [
+          {
+            "expr": "count(ibs_policy_active)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": { "h": 6, "w": 6, "x": 12, "y": 16 },
+        "type": "stat",
+        "title": "Online Devices",
+        "targets": [
+          {
+            "expr": "count(up{job=\"iot-nodes\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name",
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": { "h": 6, "w": 6, "x": 18, "y": 16 },
+        "type": "stat",
+        "title": "System Health",
+        "targets": [
+          {
+            "expr": "up{job=\"intent-manager\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name",
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              { "type": "value", "value": "1", "text": "Healthy" },
+              { "type": "value", "value": "0", "text": "Down" }
+            ],
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "time": { "from": "now-15m", "to": "now" },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Policy Enforcements",
+          "datasource": "Prometheus",
+          "expr": "changes(ibs_policy_enforcement_total[1m]) > 0",
+          "step": "1m",
+          "iconColor": "blue"
+        }
+      ]
+    }
+  }
+}

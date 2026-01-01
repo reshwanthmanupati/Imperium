@@ -1,0 +1,181 @@
+# Device Registry - IoT Node Configuration
+# Defines all devices in the Imperium network with their capabilities and profiles
+
+devices:
+  # Temperature Sensors
+  node-1:
+    type: temperature_sensor
+    description: "Primary temperature sensor - Server Room"
+    capabilities:
+      - mqtt
+      - telemetry
+      - prometheus_metrics
+    qos_profile: high_priority
+    priority_level: 9
+    default_sampling_rate: 5 # seconds
+    mqtt_topics:
+      data: "iot/node-1/data"
+      control: "iot/node-1/control"
+      status: "iot/node-1/status"
+    network:
+      max_bandwidth: "10mbps"
+      min_latency: "50ms"
+    location: "rack-A-1"
+
+  node-2:
+    type: temperature_sensor
+    description: "Secondary temperature sensor - Storage Area"
+    capabilities:
+      - mqtt
+      - telemetry
+    qos_profile: medium_priority
+    priority_level: 5
+    default_sampling_rate: 10
+    mqtt_topics:
+      data: "iot/node-2/data"
+      control: "iot/node-2/control"
+      status: "iot/node-2/status"
+    network:
+      max_bandwidth: "5mbps"
+      min_latency: "100ms"
+    location: "storage-B-2"
+
+  # Cameras
+  camera-1:
+    type: camera
+    description: "Security camera - Main entrance"
+    capabilities:
+      - mqtt
+      - video_stream
+      - motion_detection
+    qos_profile: bandwidth_limited
+    priority_level: 7
+    default_sampling_rate: 1 # FPS control
+    mqtt_topics:
+      data: "iot/camera-1/stream"
+      control: "iot/camera-1/control"
+      status: "iot/camera-1/status"
+    network:
+      max_bandwidth: "2mbps" # Throttled for bandwidth conservation
+      min_latency: "200ms"
+    location: "entrance-main"
+
+  camera-2:
+    type: camera
+    description: "Security camera - Parking lot"
+    capabilities:
+      - mqtt
+      - video_stream
+    qos_profile: low_priority
+    priority_level: 3
+    default_sampling_rate: 1
+    mqtt_topics:
+      data: "iot/camera-2/stream"
+      control: "iot/camera-2/control"
+      status: "iot/camera-2/status"
+    network:
+      max_bandwidth: "1mbps"
+      min_latency: "500ms"
+    location: "parking-lot"
+
+  # Environmental Sensors
+  env-sensor-1:
+    type: environmental_sensor
+    description: "Multi-sensor - Humidity, Pressure, Air Quality"
+    capabilities:
+      - mqtt
+      - telemetry
+      - multi_sensor
+      - prometheus_metrics
+    qos_profile: medium_priority
+    priority_level: 6
+    default_sampling_rate: 15
+    mqtt_topics:
+      data: "iot/env-sensor-1/data"
+      control: "iot/env-sensor-1/control"
+      status: "iot/env-sensor-1/status"
+    network:
+      max_bandwidth: "5mbps"
+      min_latency: "150ms"
+    location: "office-floor-2"
+
+  # Motion Sensors
+  motion-1:
+    type: motion_sensor
+    description: "PIR motion detector - Hallway"
+    capabilities:
+      - mqtt
+      - event_based
+      - low_power
+    qos_profile: event_driven
+    priority_level: 8
+    default_sampling_rate: 0 # Event-based, not periodic
+    mqtt_topics:
+      data: "iot/motion-1/events"
+      control: "iot/motion-1/control"
+      status: "iot/motion-1/status"
+    network:
+      max_bandwidth: "1mbps"
+      min_latency: "50ms" # Low latency for security
+    location: "hallway-floor-1"
+
+# QoS Profiles Definition
+qos_profiles:
+  high_priority:
+    mqtt_qos: 2 # Exactly once delivery
+    priority: 9
+    max_latency_ms: 50
+    min_throughput_mbps: 1
+
+  medium_priority:
+    mqtt_qos: 1 # At least once delivery
+    priority: 5
+    max_latency_ms: 150
+    min_throughput_mbps: 0.5
+
+  low_priority:
+    mqtt_qos: 0 # At most once delivery
+    priority: 2
+    max_latency_ms: 500
+    min_throughput_mbps: 0.1
+
+  bandwidth_limited:
+    mqtt_qos: 1
+    priority: 4
+    max_latency_ms: 200
+    max_bandwidth_mbps: 2 # Hard limit
+
+  event_driven:
+    mqtt_qos: 2
+    priority: 8
+    max_latency_ms: 50
+    burst_mode: true
+
+# Device Type Definitions
+device_types:
+  temperature_sensor:
+    default_metrics:
+      - temperature
+      - timestamp
+    sampling_rate_range: [1, 60] # seconds
+
+  camera:
+    default_metrics:
+      - frame_rate
+      - resolution
+      - bandwidth_usage
+    sampling_rate_range: [1, 30] # FPS
+
+  environmental_sensor:
+    default_metrics:
+      - humidity
+      - pressure
+      - air_quality
+      - temperature
+    sampling_rate_range: [5, 300]
+
+  motion_sensor:
+    default_metrics:
+      - motion_detected
+      - last_trigger_time
+    event_based: true

@@ -1,0 +1,205 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "imperium-devices",
+    "title": "Imperium - Device Performance",
+    "tags": ["imperium", "devices", "iot"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+        "type": "table",
+        "title": "Device Status Overview",
+        "targets": [
+          {
+            "expr": "iot_messages_sent_total",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": { "Time": true, "__name__": true },
+              "renameByName": {
+                "node_id": "Device ID",
+                "Value": "Messages Sent"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+        "type": "graph",
+        "title": "Device Latency Comparison",
+        "targets": [
+          {
+            "expr": "iot_latency_ms",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "ms", "logBase": 1, "min": 0 },
+          { "format": "short" }
+        ],
+        "xaxis": { "mode": "time", "show": true },
+        "legend": {
+          "show": true,
+          "values": true,
+          "min": true,
+          "max": true,
+          "current": true,
+          "avg": true
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+        "type": "graph",
+        "title": "Device Throughput",
+        "targets": [
+          {
+            "expr": "rate(iot_messages_sent_total[5m])",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "ops", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "legend": { "show": true, "values": true, "current": true, "avg": true }
+      },
+      {
+        "id": 4,
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+        "type": "graph",
+        "title": "Sensor Values Over Time",
+        "targets": [
+          {
+            "expr": "iot_sensor_value",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          { "format": "celsius", "label": "Temperature" },
+          { "format": "short" }
+        ],
+        "xaxis": { "mode": "time" },
+        "lines": true,
+        "fill": 0,
+        "linewidth": 2
+      },
+      {
+        "id": 5,
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+        "type": "graph",
+        "title": "Device Bandwidth Consumption",
+        "targets": [
+          {
+            "expr": "rate(iot_bandwidth_bytes[5m])",
+            "legendFormat": "{{node_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [{ "format": "Bps", "min": 0 }, { "format": "short" }],
+        "xaxis": { "mode": "time" },
+        "stack": false,
+        "percentage": false
+      },
+      {
+        "id": 6,
+        "gridPos": { "h": 6, "w": 8, "x": 0, "y": 26 },
+        "type": "stat",
+        "title": "Highest Latency Device",
+        "targets": [
+          {
+            "expr": "topk(1, iot_latency_ms)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name",
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 100, "color": "yellow" },
+                { "value": 200, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": { "h": 6, "w": 8, "x": 8, "y": 26 },
+        "type": "stat",
+        "title": "Most Active Device",
+        "targets": [
+          {
+            "expr": "topk(1, rate(iot_messages_sent_total[5m]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value_and_name",
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": { "h": 6, "w": 8, "x": 16, "y": 26 },
+        "type": "stat",
+        "title": "Average Network Latency",
+        "targets": [
+          {
+            "expr": "avg(iot_latency_ms)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": { "calcs": ["lastNotNull"] },
+          "textMode": "value",
+          "colorMode": "background",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "thresholds": {
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 75, "color": "yellow" },
+                { "value": 150, "color": "red" }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "time": { "from": "now-30m", "to": "now" },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m"]
+    }
+  }
+}

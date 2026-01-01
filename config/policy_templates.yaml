@@ -1,0 +1,254 @@
+# Policy Templates - Pre-defined Network Policy Configurations
+# Used by Policy Engine to generate actionable policies
+
+# Traffic Shaping Templates
+traffic_shaping:
+  high_priority:
+    name: "High Priority Traffic Class"
+    type: "htb" # Hierarchical Token Bucket
+    parameters:
+      rate: "100mbit"
+      ceil: "200mbit"
+      burst: "32k"
+      priority: 1
+    tc_commands:
+      - "qdisc add dev {interface} root handle 1: htb default 30"
+      - "class add dev {interface} parent 1: classid 1:1 htb rate {rate} ceil {ceil} burst {burst}"
+      - "filter add dev {interface} protocol ip parent 1:0 prio {priority} u32 match ip dst {target_ip} flowid 1:1"
+
+  medium_priority:
+    name: "Medium Priority Traffic Class"
+    type: "htb"
+    parameters:
+      rate: "50mbit"
+      ceil: "100mbit"
+      burst: "16k"
+      priority: 5
+
+  low_priority:
+    name: "Low Priority Traffic Class"
+    type: "htb"
+    parameters:
+      rate: "10mbit"
+      ceil: "30mbit"
+      burst: "8k"
+      priority: 10
+
+  low_latency:
+    name: "Low Latency Traffic Class"
+    type: "htb_with_fq_codel"
+    parameters:
+      rate: "100mbit"
+      ceil: "150mbit"
+      burst: "64k"
+      priority: 1
+      queue: "fq_codel"
+    tc_commands:
+      - "qdisc add dev {interface} root handle 1: htb default 30"
+      - "class add dev {interface} parent 1: classid 1:1 htb rate {rate} ceil {ceil} burst {burst}"
+      - "qdisc add dev {interface} parent 1:1 fq_codel"
+      - "filter add dev {interface} protocol ip parent 1:0 prio {priority} u32 match ip dst {target_ip} flowid 1:1"
+
+# Bandwidth Limit Templates
+bandwidth_limits:
+  strict_limit:
+    name: "Strict Bandwidth Limit"
+    type: "tbf" # Token Bucket Filter
+    parameters:
+      rate: "{bandwidth}mbit"
+      burst: "15k"
+      latency: "50ms"
+    tc_commands:
+      - "qdisc add dev {interface} root tbf rate {rate} burst {burst} latency {latency}"
+
+  soft_limit:
+    name: "Soft Bandwidth Limit (burstable)"
+    type: "htb"
+    parameters:
+      rate: "{bandwidth}mbit"
+      ceil: "{bandwidth_burst}mbit"
+      burst: "32k"
+
+  throttle:
+    name: "Bandwidth Throttle"
+    type: "tbf"
+    parameters:
+      rate: "{bandwidth}mbit"
+      burst: "10k"
+      latency: "100ms"
+
+# Latency Control Templates
+latency_control:
+  minimize_latency:
+    name: "Minimize Latency Configuration"
+    type: "priority_queue"
+    parameters:
+      netem_delay: "0ms"
+      priority: "express"
+      queue: "fq_codel"
+    tc_commands:
+      - "qdisc add dev {interface} root handle 1: prio bands 3 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1"
+      - "qdisc add dev {interface} parent 1:1 fq_codel"
+
+  add_latency:
+    name: "Add Artificial Latency (testing)"
+    type: "netem"
+    parameters:
+      delay: "{latency}ms"
+      jitter: "10ms"
+    tc_commands:
+      - "qdisc add dev {interface} root netem delay {delay} {jitter}"
+
+  reduce_jitter:
+    name: "Reduce Jitter Configuration"
+    type: "netem_with_limit"
+    parameters:
+      delay: "10ms"
+      jitter: "2ms"
+      limit: "1000"
+
+# QoS Templates (MQTT Device Config)
+qos_templates:
+  guaranteed_delivery:
+    name: "Guaranteed Delivery (QoS 2)"
+    mqtt_config:
+      qos: 2
+      retain: true
+      clean_session: false
+      keep_alive: 60
+
+  at_least_once:
+    name: "At Least Once Delivery (QoS 1)"
+    mqtt_config:
+      qos: 1
+      retain: false
+      clean_session: true
+      keep_alive: 30
+
+  best_effort:
+    name: "Best Effort (QoS 0)"
+    mqtt_config:
+      qos: 0
+      retain: false
+      clean_session: true
+      keep_alive: 120
+
+# Routing Priority Templates
+routing_priority:
+  high_priority_tos:
+    name: "High Priority TOS Marking"
+    type: "iptables_tos"
+    parameters:
+      tos: "0x10" # Minimize delay
+    commands:
+      - "iptables -t mangle -A POSTROUTING -d {target_ip} -j TOS --set-tos {tos}"
+
+  low_latency_dscp:
+    name: "Low Latency DSCP Marking"
+    type: "iptables_dscp"
+    parameters:
+      dscp: "EF" # Expedited Forwarding
+    commands:
+      - "iptables -t mangle -A POSTROUTING -d {target_ip} -j DSCP --set-dscp {dscp}"
+
+# Device Configuration Templates
+device_config:
+  high_performance:
+    name: "High Performance Mode"
+    parameters:
+      sampling_rate: 1 # Fast sampling
+      qos: 2
+      priority: "high"
+      enabled: true
+      power_saving: false
+
+  balanced:
+    name: "Balanced Mode"
+    parameters:
+      sampling_rate: 5
+      qos: 1
+      priority: "normal"
+      enabled: true
+      power_saving: false
+
+  power_saving:
+    name: "Power Saving Mode"
+    parameters:
+      sampling_rate: 30
+      qos: 0
+      priority: "low"
+      enabled: true
+      power_saving: true
+
+  event_driven:
+    name: "Event-Driven Mode"
+    parameters:
+      sampling_rate: 0 # Event-based only
+      qos: 2
+      priority: "high"
+      enabled: true
+      trigger_based: true
+
+# Combined Policy Templates
+combined_policies:
+  critical_sensor:
+    name: "Critical Sensor Configuration"
+    applies:
+      - traffic_shaping: high_priority
+      - qos: guaranteed_delivery
+      - routing_priority: high_priority_tos
+      - device_config: high_performance
+
+  bandwidth_constrained:
+    name: "Bandwidth Constrained Device"
+    applies:
+      - bandwidth_limits: strict_limit
+      - qos: best_effort
+      - device_config: power_saving
+
+  low_latency_critical:
+    name: "Low Latency Critical Path"
+    applies:
+      - latency_control: minimize_latency
+      - traffic_shaping: low_latency
+      - qos: guaranteed_delivery
+      - routing_priority: low_latency_dscp
+
+# Policy Conflict Resolution Rules
+conflict_resolution:
+  rules:
+    - condition: "multiple_bandwidth_limits"
+      action: "use_most_restrictive"
+
+    - condition: "conflicting_priorities"
+      action: "use_highest_priority"
+
+    - condition: "qos_mismatch"
+      action: "use_most_reliable"
+
+    - condition: "latency_vs_bandwidth"
+      action: "prioritize_latency"
+
+# Default Network Interface
+network:
+  default_interface: "eth0"
+  fallback_interface: "wlan0"
+
+# Policy Enforcement Order
+enforcement_order:
+  - network_qdisc_setup
+  - traffic_shaping_classes
+  - bandwidth_limits
+  - latency_control
+  - routing_priority
+  - device_configuration
+  - verification
+
+# Rollback Configuration
+rollback:
+  enabled: true
+  timeout_seconds: 30
+  verification_checks:
+    - ping_test
+    - mqtt_connectivity
+    - prometheus_metrics
