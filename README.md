@@ -45,6 +45,7 @@ While **Intent-Based Networking (IBN)** has emerged as a promising paradigm enab
 ### The Opportunity
 
 An **urgent need exists** for a lightweight, autonomous IBN framework that:
+
 - Operates directly on **edge devices** with minimal overhead
 - Maintains **real-time adaptive capabilities**
 - Enables **non-expert operators** to manage complex IoT networks intuitively
@@ -58,7 +59,7 @@ An **urgent need exists** for a lightweight, autonomous IBN framework that:
 ✅ **Translates** them into enforceable network policies  
 ✅ **Enforces** policies using embedded networking tools (`tc`, `netem`, `iptables`)  
 ✅ **Adapts autonomously** to dynamic IoT workloads through closed-loop feedback  
-✅ **Enables** intuitive management for non-expert operators  
+✅ **Enables** intuitive management for non-expert operators
 
 ### Project Objectives
 
@@ -157,12 +158,14 @@ The system follows a **structured 6-phase methodology** to transform high-level 
 ### 1. Intent Acquisition
 
 **Users submit high-level intents** through a web interface or REST API. Intents may specify goals such as:
+
 - Prioritizing specific devices or device groups
 - Reducing latency for critical applications
 - Limiting bandwidth usage for non-essential traffic
 - Adjusting QoS levels based on traffic type
 
 **Example Intents:**
+
 ```
 "Prioritize temperature sensors"
 "Limit bandwidth to 100KB/s for cameras"
@@ -172,6 +175,7 @@ The system follows a **structured 6-phase methodology** to transform high-level 
 ### 2. Intent Parsing
 
 A **rule-based parser** (with optional NLP enhancement) interprets the intent and extracts measurable objectives:
+
 - **Priority levels** (high/medium/low)
 - **Latency thresholds** (target response time in ms)
 - **Bandwidth limits** (rate limits in KB/s or MB/s)
@@ -183,6 +187,7 @@ A **rule-based parser** (with optional NLP enhancement) interprets the intent an
 ### 3. Policy Generation
 
 The **Policy Engine** transforms parsed intents into actionable configuration policies:
+
 - **Traffic shaping rules** - HTB (Hierarchical Token Bucket) classes
 - **MQTT QoS levels** - Message delivery guarantees (0, 1, or 2)
 - **Device behavior adjustments** - Sampling rates, bandwidth allocation
@@ -195,12 +200,14 @@ The **Policy Engine** transforms parsed intents into actionable configuration po
 The **Raspberry Pi** applies generated policies using:
 
 **Network Enforcement:**
+
 - `tc` (traffic control) - Bandwidth management
 - `htb` - Hierarchical token bucket queuing
 - `netem` - Network emulation (latency injection, jitter control)
 - `iptables` - Packet filtering and routing rules
 
 **Device Enforcement:**
+
 - **MQTT commands** - Publish configuration updates to IoT nodes
 - **QoS updates** - Change message delivery guarantees
 - **Sampling rate control** - Adjust sensor data frequency
@@ -211,6 +218,7 @@ The **Raspberry Pi** applies generated policies using:
 ### 5. Monitoring
 
 **Prometheus** continuously collects network performance metrics:
+
 - **Latency** - Round-trip time, policy enforcement delay
 - **Throughput** - Data transfer rates per device
 - **Packet delivery rate** - Success/failure ratios
@@ -218,6 +226,7 @@ The **Raspberry Pi** applies generated policies using:
 - **Custom metrics** - Intent satisfaction ratio, policy compliance
 
 **Grafana** visualizes real-time changes:
+
 - Time-series graphs for all metrics
 - Device-specific performance panels
 - System resource utilization (CPU, memory)
@@ -772,17 +781,17 @@ python scripts/test_api.py
 
 ## 📊 Performance Metrics Summary
 
-| Metric | Target | Achieved | Status |
-|--------|--------|----------|--------|
-| **Intent Translation Accuracy** | >95% | 100% | ✅ Exceeded |
-| **Policy Enforcement Latency** | <500ms | 200-500ms | ✅ Met |
-| **Latency Reduction (High-Priority)** | >50% | 70-90% | ✅ Exceeded |
-| **Throughput Improvement** | >2× | Up to 3× | ✅ Exceeded |
-| **Intent Satisfaction Rate** | >90% | >95% | ✅ Exceeded |
-| **Feedback Loop Stabilization** | <2min | 1-2s | ✅ Far Exceeded |
-| **CPU Usage (Raspberry Pi)** | <60% | 18-35% avg | ✅ Exceeded |
-| **Memory Usage** | <4GB | 1.5-2.2GB | ✅ Exceeded |
-| **IoT Node Scalability** | 20+ nodes | 50+ nodes | ✅ Exceeded |
+| Metric                                | Target    | Achieved   | Status          |
+| ------------------------------------- | --------- | ---------- | --------------- |
+| **Intent Translation Accuracy**       | >95%      | 100%       | ✅ Exceeded     |
+| **Policy Enforcement Latency**        | <500ms    | 200-500ms  | ✅ Met          |
+| **Latency Reduction (High-Priority)** | >50%      | 70-90%     | ✅ Exceeded     |
+| **Throughput Improvement**            | >2×       | Up to 3×   | ✅ Exceeded     |
+| **Intent Satisfaction Rate**          | >90%      | >95%       | ✅ Exceeded     |
+| **Feedback Loop Stabilization**       | <2min     | 1-2s       | ✅ Far Exceeded |
+| **CPU Usage (Raspberry Pi)**          | <60%      | 18-35% avg | ✅ Exceeded     |
+| **Memory Usage**                      | <4GB      | 1.5-2.2GB  | ✅ Exceeded     |
+| **IoT Node Scalability**              | 20+ nodes | 50+ nodes  | ✅ Exceeded     |
 
 ---
 
