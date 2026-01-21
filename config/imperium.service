@@ -38,8 +38,8 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=imperium
 
-# Resource limits
-MemoryLimit=512M
+# Resource limits (updated for modern systemd)
+MemoryMax=512M
 CPUQuota=60%
 
 [Install]
