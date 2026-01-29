@@ -430,16 +430,6 @@ Imperium/
 ├── Makefile                      # Build automation
 ├── requirements.txt              # Python dependencies
 ├── .env.example                  # Environment configuration template
-├── task.md                       # Development task list
-├── demo.md                       # Demo guide (10 phases)
-├── DEMO_COMMANDS.md              # Quick demo command reference
-├── VIVA_QA.md                    # Viva Q&A preparation (39 questions)
-├── explanation.md                # Comprehensive project explanation
-├── SECURITY_CHECKLIST.md         # Pre-deployment security checklist
-├── SECURITY_COMPLETE.md          # Security implementation summary
-├── RASPBERRY_PI_SETUP.md         # Raspberry Pi deployment guide
-├── CODEBASE_INDEX.md             # Complete codebase reference
-├── DEPLOYMENT_SUMMARY.md         # Deployment status summary
 └── README.md                     # This file
 ```
 
@@ -607,8 +597,8 @@ Imperium/
 
 - ✅ [SETUP.md](SETUP.md) - Detailed setup guide
 - ✅ [QUICKSTART.md](QUICKSTART.md) - Quick start tutorial
-- ✅ [PROGRESS.md](PROGRESS.md) - Detailed progress report
-- ✅ [task.md](task.md) - Development task list
+- ✅ [docs/SECURITY.md](docs/SECURITY.md) - Security configuration
+- ✅ [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) - Recovery procedures
 
 ---
 
