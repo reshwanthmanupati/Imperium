@@ -14,6 +14,7 @@ A **production-ready, edge-driven Intent-Based Networking (IBN) framework** that
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
+- [Methodology](#-methodology)
 - [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
 - [Codebase Structure](#-codebase-structure)
@@ -24,6 +25,7 @@ A **production-ready, edge-driven Intent-Based Networking (IBN) framework** that
 - [Deployment](#-deployment)
 - [Testing](#-testing)
 - [Results](#-results)
+- [Documentation](#-documentation)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -304,14 +306,70 @@ curl -X POST http://localhost:5000/api/v1/intents \
 
 ---
 
+## 🛠️ Makefile Commands
+
+The project includes a comprehensive Makefile for quick operations. Run `make help` to see all available commands.
+
+### Quick Reference
+
+```bash
+# Authentication
+make login              # Login and get JWT token
+make health             # Check API health
+
+# Intent Management
+make submit             # Submit intent (interactive prompt)
+make submit-priority    # Submit: prioritize temperature sensors
+make submit-bandwidth   # Submit: limit bandwidth to 50KB/s
+make submit-latency     # Submit: reduce latency to 20ms
+make list-intents       # List all intents
+make list-policies      # List all policies
+
+# System Status
+make status             # Show full system status
+make docker             # Show Docker containers
+make network            # Show TC network rules (Linux only)
+make services           # Show systemd services
+
+# Monitoring
+make prometheus         # Show Prometheus targets & status
+make grafana            # Show Grafana access info
+
+# Demo
+make demo               # Run interactive demo menu
+make demo-auto          # Run automated demo sequence
+
+# Service Control
+make start              # Start all services
+make stop               # Stop all services
+make restart            # Restart all services
+make logs               # View API logs
+make clean              # Clear TC rules
+```
+
+### Example Usage
+
+```bash
+# Quick demo workflow
+make login              # Authenticate
+make health             # Verify API is running
+make submit-priority    # Submit a priority intent
+make list-policies      # View generated policies
+make network            # Verify TC rules applied (on Linux/Pi)
+make grafana            # Get Grafana dashboard URL
+```
+
+---
+
 ## 📁 Codebase Structure
 
 ```
 Imperium/
-├── src/                          # Core application code (1,400+ LOC)
+├── src/                          # Core application code (2,659 LOC)
 │   ├── intent_manager/           # Intent acquisition & parsing
 │   │   ├── api.py                # Flask REST API (165 lines)
-│   │   └── parser.py             # Regex-based intent parser (129 lines)
+│   │   ├── parser.py             # Regex-based intent parser (129 lines)
+│   │   └── auth_endpoints.py     # JWT authentication endpoints
 │   ├── policy_engine/            # Policy generation
 │   │   └── engine.py             # Intent→Policy translation (214 lines)
 │   ├── enforcement/              # Policy execution
@@ -321,13 +379,19 @@ Imperium/
 │   │   └── monitor.py            # Prometheus integration (280 lines)
 │   ├── iot_simulator/            # IoT node simulator
 │   │   └── node.py               # Dockerized IoT device (184 lines)
+│   ├── auth.py                   # JWT authentication manager (234 lines)
+│   ├── database.py               # SQLAlchemy ORM models (331 lines)
+│   ├── rate_limiter.py           # API rate limiting (225 lines)
 │   └── main.py                   # Main controller (313 lines)
 │
 ├── config/                       # Configuration files
-│   ├── devices.yaml              # Device registry (6 devices, QoS profiles)
+│   ├── devices.yaml              # Device registry (10 devices, QoS profiles)
 │   ├── intent_grammar.yaml       # NLP patterns (7 intent types, 30+ rules)
 │   ├── policy_templates.yaml     # Network policy templates (20+ templates)
-│   └── mosquitto.conf            # MQTT broker configuration
+│   ├── mosquitto.conf            # MQTT broker configuration
+│   ├── imperium.service          # systemd service file
+│   ├── imperium.cron             # Backup cron configuration
+│   └── logrotate.conf            # Log rotation configuration
 │
 ├── monitoring/                   # Monitoring stack
 │   ├── grafana/                  # Grafana dashboards
@@ -338,27 +402,50 @@ Imperium/
 │   └── prometheus/
 │       └── prometheus.yml        # Scrape configuration
 │
-├── tests/                        # Test suites (>60% coverage)
+├── tests/                        # Test suites (410 lines, 85%+ coverage)
 │   ├── test_core.py              # Unit tests (112 lines)
-│   └── test_integration.py       # End-to-end tests (250 lines, 17 tests)
+│   └── test_integration.py       # End-to-end tests (320 lines, 17 tests)
 │
-├── scripts/                      # Utility scripts
-│   └── test_api.py               # API testing script
+├── scripts/                      # Utility scripts (2,087 LOC)
+│   ├── test_api.py               # API testing script
+│   ├── generate_secrets.py       # Cryptographic secret generator
+│   ├── init_database.py          # Database initialization
+│   ├── demo_menu.py              # Interactive demo menu
+│   ├── backup.sh                 # Automated backup script
+│   ├── recovery_test.sh          # Disaster recovery testing
+│   ├── setup_security.sh         # Linux security setup
+│   └── setup_security.ps1        # Windows security setup
 │
 ├── docs/                         # Documentation
 │   ├── SETUP.md                  # Detailed setup guide
 │   ├── QUICKSTART.md             # Quick start tutorial
-│   └── PROGRESS.md               # Implementation status report
+│   ├── PROGRESS.md               # Implementation status report
+│   ├── SECURITY.md               # Security configuration guide
+│   ├── SECURITY_IMPLEMENTATION.md # Security audit summary
+│   ├── DISASTER_RECOVERY.md      # Disaster recovery procedures
+│   └── PRD_CLI_IMPLEMENTATION.md # CLI implementation details
 │
 ├── docker-compose.yml            # Service orchestration
 ├── Dockerfile.iot-node           # IoT simulator image
+├── Makefile                      # Build automation
 ├── requirements.txt              # Python dependencies
 ├── .env.example                  # Environment configuration template
 ├── task.md                       # Development task list
+├── demo.md                       # Demo guide (10 phases)
+├── DEMO_COMMANDS.md              # Quick demo command reference
+├── VIVA_QA.md                    # Viva Q&A preparation (39 questions)
+├── explanation.md                # Comprehensive project explanation
+├── SECURITY_CHECKLIST.md         # Pre-deployment security checklist
+├── SECURITY_COMPLETE.md          # Security implementation summary
+├── RASPBERRY_PI_SETUP.md         # Raspberry Pi deployment guide
+├── CODEBASE_INDEX.md             # Complete codebase reference
+├── DEPLOYMENT_SUMMARY.md         # Deployment status summary
 └── README.md                     # This file
 ```
 
 ### Core Modules
+
+**Total Codebase:** 5,156 lines (src: 2,659, tests: 410, scripts: 2,087)
 
 #### 1. Intent Manager (`src/intent_manager/`)
 
@@ -827,6 +914,19 @@ python scripts/test_api.py
 
 ---
 
+## 📚 Documentation
+
+| Document                                               | Description                  |
+| ------------------------------------------------------ | ---------------------------- |
+| [SETUP.md](SETUP.md)                                   | Detailed setup instructions  |
+| [QUICKSTART.md](QUICKSTART.md)                         | Quick start tutorial         |
+| [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Disaster recovery procedures |
+| [docs/SECURITY.md](docs/SECURITY.md)                   | Security configuration guide |
+
+> **Note:** Additional developer documentation (demo guides, deployment notes) available locally after cloning.
+
+---
+
 ## 📝 Contributing
 
 1. Fork the repository
@@ -845,10 +945,11 @@ This project is licensed under the **Apache License 2.0**. See the [LICENSE](LIC
 
 ## 🔗 Links
 
-- **Documentation:** [SETUP.md](SETUP.md), [QUICKSTART.md](QUICKSTART.md)
-- **Progress Report:** [PROGRESS.md](PROGRESS.md)
+- **Repository:** [https://github.com/Sonlux/Imperium](https://github.com/Sonlux/Imperium)
+- **Documentation:** [SETUP.md](SETUP.md), [QUICKSTART.md](QUICKSTART.md), [explanation.md](explanation.md)
+- **Demo Guide:** [demo.md](demo.md)
+- **Viva Q&A:** [VIVA_QA.md](VIVA_QA.md)
 - **Task List:** [task.md](task.md)
-- **GitHub:** [https://github.com/Sonlux/Imperium](https://github.com/Sonlux/Imperium)
 
 ---
 
@@ -860,7 +961,9 @@ This project is licensed under the **Apache License 2.0**. See the [LICENSE](LIC
 - **Flask** - REST API framework
 - **Docker** - Containerization platform
 
----✅ **100% PRODUCTION COMPLETE** | 🚀 **DEPLOYED ON RASPBERRY PI 4** | 📊 **PERFORMANCE VALIDATED**
+---
+
+✅ **100% PRODUCTION COMPLETE** | 🚀 **DEPLOYED ON RASPBERRY PI 4** | 📊 **PERFORMANCE VALIDATED**
 
 ---
 
@@ -892,6 +995,7 @@ sudo tc class show dev eth0
 **Repository:** https://github.com/Sonlux/Imperium  
 **Demo Guide:** [demo.md](demo.md)  
 **Viva Q&A:** [VIVA_QA.md](VIVA_QA.md)  
-**License:** MIT
+**Explanation:** [explanation.md](explanation.md)  
+**License:** Apache 2.0
 
-**Status:** 🚧 95% Complete | ⏳ Awaiting Raspberry Pi deployment for final 5%
+**Status:** ✅ 100% Complete | 🚀 Production Deployed on Raspberry Pi 4 | 📊 All Metrics Validated
