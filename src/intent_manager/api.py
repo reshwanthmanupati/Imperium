@@ -46,6 +46,9 @@ class IntentManager:
         self.parser = IntentParser()
         self.policy_engine = PolicyEngine()
         self.db_manager = db_manager or DatabaseManager()
+        # Enforcement modules (set by main.py)
+        self.device_enforcer = None
+        self.network_enforcer = None
     
     def submit_intent(self, intent_data):
         """
@@ -102,14 +105,17 @@ class IntentManager:
             for policy in policies:
                 policy_dict = policy.to_dict()
                 self.db_manager.add_policy(
-                    policy_id=policy_dict['id'],
+                    policy_id=policy_dict['policy_id'],
                     intent_id=intent_id,
-                    policy_type=policy_dict['type'],
-                    parameters=policy_dict['config'],
+                    policy_type=policy_dict['policy_type'],
+                    parameters=policy_dict['parameters'],
                     status='pending'
                 )
         except Exception as e:
             logger.warning(f"Failed to persist intent to database: {e}")
+        
+        # Enforce policies
+        self._enforce_policies(policies, parsed)
         
         logger.info(f"Intent {intent_id} created with {len(policies)} policies")
         
@@ -121,6 +127,43 @@ class IntentManager:
             if intent['id'] == intent_id:
                 return intent
         return None
+    
+    def _enforce_policies(self, policies, parsed):
+        """Enforce generated policies via MQTT and network"""
+        target_device = parsed.get('parameters', {}).get('target_device', '')
+        
+        # Normalize target (ensure node-X format)
+        if target_device and not target_device.startswith('node-'):
+            target_device = f"node-{target_device}"
+        
+        for policy in policies:
+            policy_dict = policy.to_dict()
+            policy_type = policy_dict.get('policy_type', '')  # Fixed: was 'type'
+            
+            # Build enforcement policy
+            enforce_policy = {
+                'policy_type': policy_type,
+                'target': target_device or policy_dict.get('target', ''),
+                'parameters': policy_dict.get('parameters', {})  # Fixed: was 'config'
+            }
+            
+            logger.info(f"Enforcing policy: {enforce_policy}")
+            
+            # Apply via device enforcer (MQTT)
+            if self.device_enforcer and policy_type in ['qos_control', 'device_config']:
+                try:
+                    success = self.device_enforcer.apply_policy(enforce_policy)
+                    logger.info(f"Device enforcement {'succeeded' if success else 'failed'}")
+                except Exception as e:
+                    logger.error(f"Device enforcement error: {e}")
+            
+            # Apply via network enforcer (tc)
+            if self.network_enforcer and policy_type in ['bandwidth', 'latency', 'traffic_shaping']:
+                try:
+                    success = self.network_enforcer.apply_policy(enforce_policy)
+                    logger.info(f"Network enforcement {'succeeded' if success else 'failed'}")
+                except Exception as e:
+                    logger.error(f"Network enforcement error: {e}")
     
     def list_intents(self):
         """List all submitted intents"""

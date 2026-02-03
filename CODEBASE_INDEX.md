@@ -1,6 +1,6 @@
 # Imperium Codebase Index
 
-**Generated:** 2026-01-21  
+**Generated:** 2026-02-03  
 **Status:** ✅ 100% Complete - Production Deployed on Raspberry Pi  
 **Platform:** Windows (Development) + Raspberry Pi 4 (Production)
 
@@ -21,9 +21,12 @@ Imperium/
 │   ├── mosquitto.conf               # MQTT broker configuration (29 lines)
 │   └── policy_templates.yaml        # tc/netem templates (20+ commands)
 ├── data/
-│   └── imperium.db                  # SQLite database (49KB, 4 tables)
+│   └── imperium.db                  # SQLite database (60KB, 4 tables)
 ├── docs/
 │   ├── DISASTER_RECOVERY.md         # Recovery procedures (NEW)
+│   ├── MONITORING_GUIDE.md          # Monitoring best practices
+│   ├── PRD_CLI_IMPLEMENTATION.md    # CLI feature roadmap
+│   ├── SECURITY_IMPLEMENTATION.md   # Security implementation details
 │   └── SECURITY.md                  # Security & production guide (450+ lines)
 ├── monitoring/
 │   ├── grafana/
@@ -37,8 +40,12 @@ Imperium/
 ├── scripts/
 │   ├── backup.sh                    # Automated backup script (NEW)
 │   ├── check_status.sh              # System status checker
+│   ├── demo_menu.py                 # Interactive demo menu
+│   ├── generate_secrets.py          # Secret key generator
 │   ├── init_database.py             # Database initialization (230 lines)
 │   ├── recovery_test.sh             # Recovery validation script (NEW)
+│   ├── setup_security.ps1           # Windows security setup
+│   ├── setup_security.sh            # Linux security setup
 │   ├── test_api.py                  # Basic API testing
 │   ├── test_api_endpoints.ps1       # PowerShell API test suite (120+ lines)
 │   └── test_api_with_auth.ps1       # Authentication test suite (200+ lines)
@@ -66,14 +73,19 @@ Imperium/
 ├── .env                             # Production environment config
 ├── .env.example                     # Environment template (95 lines)
 ├── .gitignore                       # Git exclusions
+├── check_status.sh                  # Quick status check script
+├── demo.md                          # Demo scenarios & examples
 ├── docker-compose.yml               # 4 services (scalable IoT nodes)
 ├── Dockerfile.iot-node              # IoT simulator container
 ├── LICENSE                          # MIT License
+├── Makefile                         # Build & deployment automation
 ├── PROGRESS.md                      # Implementation tracking
 ├── QUICKSTART.md                    # Quick start guide
 ├── RASPBERRY_PI_SETUP.md            # Pi deployment guide
 ├── README.md                        # Main documentation (630+ lines)
 ├── requirements.txt                 # Python dependencies (18 packages)
+├── SECURITY_CHECKLIST.md            # Security validation checklist
+├── SECURITY_COMPLETE.md             # Security implementation summary
 ├── SETUP.md                         # Setup instructions
 └── task.md                          # Task tracking (100% complete)
 ```
@@ -428,17 +440,17 @@ cp /tmp/imperium_backup_*/imperium.db data/
 
 ---
 
-**Last Updated:** 2026-01-21  
-**Total Lines of Code:** 5,200+ (source + config + scripts + tests + docs)  
+**Last Updated:** 2026-02-03  
+**Total Lines of Code:** 4,400+ Python + 7,900+ Markdown  
 **Core Production Code:** 3,200+ lines  
 **Security Layer:** 745 lines  
 **Configuration:** 900+ lines  
 **Scripts:** 800+ lines  
 **Tests:** 362 lines  
-**Documentation:** 2,500+ lines  
+**Documentation:** 7,900+ lines  
 **Implementation Status:** ✅ 100% Complete  
 **Platform:** Raspberry Pi 4 (Production) + Windows (Development)  
-**Database:** SQLite with 4 tables (9 intents, 1 policy, 1 user)  
+**Database:** SQLite with 4 tables (60KB, 9 intents, 1 policy, 1 user)  
 **Services:** 13 containers + 1 systemd service  
 **Authentication:** JWT-based with bcrypt password hashing  
 **API Endpoints:** 8 total (5 intent/policy + 3 authentication)

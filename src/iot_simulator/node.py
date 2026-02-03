@@ -2,6 +2,7 @@
 """
 IoT Node Simulator - Simulates IoT device behavior
 Publishes sensor data via MQTT and responds to control messages
+Exposes Prometheus metrics for monitoring
 """
 import paho.mqtt.client as mqtt
 import json
@@ -10,34 +11,116 @@ import random
 import logging
 import os
 from datetime import datetime
-from prometheus_client import start_http_server, Counter, Gauge
+from prometheus_client import start_http_server, Counter, Gauge, Info
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Prometheus metrics
-messages_sent = Counter('iot_messages_sent_total', 'Total messages sent')
-messages_received = Counter('iot_messages_received_total', 'Total messages received')
-sensor_value = Gauge('iot_sensor_value', 'Current sensor reading')
-bandwidth_usage = Gauge('iot_bandwidth_bytes', 'Bandwidth usage in bytes')
+# Get node ID early for metric labels
+NODE_ID = os.getenv('NODE_ID', 'node-1')
+
+# ============== Prometheus Metrics ==============
+# These metrics match what's documented in MONITORING_GUIDE.md
+
+# Message counters
+mqtt_messages_published_total = Counter(
+    'mqtt_messages_published_total', 
+    'Total MQTT messages published',
+    ['node_id']
+)
+mqtt_messages_received_total = Counter(
+    'mqtt_messages_received_total',
+    'Total MQTT control messages received', 
+    ['node_id']
+)
+
+# Configuration gauges (set via intents)
+mqtt_qos_level = Gauge(
+    'mqtt_qos_level',
+    'Current MQTT QoS level (0, 1, or 2)',
+    ['node_id']
+)
+mqtt_publish_interval_seconds = Gauge(
+    'mqtt_publish_interval_seconds',
+    'Seconds between data publishes (sampling rate)',
+    ['node_id']
+)
+node_priority = Gauge(
+    'node_priority',
+    'Node priority level (1=low, 2=normal, 3=high)',
+    ['node_id', 'priority']
+)
+node_enabled = Gauge(
+    'node_enabled',
+    'Whether node is enabled (1) or disabled (0)',
+    ['node_id']
+)
+
+# Traffic metrics
+node_bytes_sent_total = Counter(
+    'node_bytes_sent_total',
+    'Total bytes sent via MQTT',
+    ['node_id']
+)
+node_latency_milliseconds = Gauge(
+    'node_latency_milliseconds',
+    'Simulated network latency in milliseconds',
+    ['node_id']
+)
+
+# Sensor data gauges
+iot_temperature_celsius = Gauge(
+    'iot_temperature_celsius',
+    'Current temperature reading',
+    ['node_id']
+)
+iot_humidity_percent = Gauge(
+    'iot_humidity_percent',
+    'Current humidity reading',
+    ['node_id']
+)
+iot_pressure_hpa = Gauge(
+    'iot_pressure_hpa',
+    'Current pressure reading',
+    ['node_id']
+)
+iot_battery_percent = Gauge(
+    'iot_battery_percent',
+    'Current battery level',
+    ['node_id']
+)
+
+# Node info
+node_info = Info('iot_node', 'IoT node information')
 
 
 class IoTNode:
-    """Simulates an IoT device"""
+    """Simulates an IoT device with Prometheus metrics"""
     
     def __init__(self, node_id, broker_host='mosquitto', broker_port=1883):
         self.node_id = node_id
         self.broker_host = broker_host
         self.broker_port = broker_port
         
-        # Node configuration
+        # Node configuration (modifiable via MQTT control messages)
         self.config = {
             'sampling_rate': 5,  # seconds
             'qos': 0,
             'priority': 'normal',
             'bandwidth_limit': None,
-            'enabled': True
+            'enabled': True,
+            'latency': 10  # simulated latency in ms
         }
+        
+        # Initialize Prometheus metrics with current config
+        self._update_prometheus_metrics()
+        
+        # Set node info
+        node_info.info({
+            'node_id': node_id,
+            'broker': broker_host,
+            'version': '1.0.0'
+        })
         
         # MQTT client
         self.client = mqtt.Client(client_id=node_id)
@@ -50,6 +133,25 @@ class IoTNode:
         self.status_topic = f"iot/{node_id}/status"
         
         self.running = False
+    
+    def _update_prometheus_metrics(self):
+        """Update all Prometheus metrics with current configuration"""
+        # QoS level
+        mqtt_qos_level.labels(node_id=self.node_id).set(self.config['qos'])
+        
+        # Sampling rate
+        mqtt_publish_interval_seconds.labels(node_id=self.node_id).set(self.config['sampling_rate'])
+        
+        # Priority (convert to numeric: low=1, normal=2, high=3)
+        priority_map = {'low': 1, 'normal': 2, 'high': 3}
+        priority_val = priority_map.get(self.config['priority'], 2)
+        node_priority.labels(node_id=self.node_id, priority=self.config['priority']).set(priority_val)
+        
+        # Enabled status
+        node_enabled.labels(node_id=self.node_id).set(1 if self.config['enabled'] else 0)
+        
+        # Latency
+        node_latency_milliseconds.labels(node_id=self.node_id).set(self.config['latency'])
     
     def on_connect(self, client, userdata, flags, rc):
         """Callback when connected to MQTT broker"""
@@ -67,15 +169,15 @@ class IoTNode:
         try:
             payload = json.loads(msg.payload.decode())
             logger.info(f"Received control message: {payload}")
-            messages_received.inc()
+            mqtt_messages_received_total.labels(node_id=self.node_id).inc()
             
             # Update configuration
             if 'sampling_rate' in payload:
-                self.config['sampling_rate'] = payload['sampling_rate']
+                self.config['sampling_rate'] = int(payload['sampling_rate'])
                 logger.info(f"Updated sampling rate to {payload['sampling_rate']}s")
             
             if 'qos' in payload:
-                self.config['qos'] = payload['qos']
+                self.config['qos'] = int(payload['qos'])
                 logger.info(f"Updated QoS to {payload['qos']}")
             
             if 'priority' in payload:
@@ -85,6 +187,13 @@ class IoTNode:
             if 'enabled' in payload:
                 self.config['enabled'] = payload['enabled']
                 logger.info(f"Node enabled: {payload['enabled']}")
+            
+            if 'latency' in payload:
+                self.config['latency'] = int(payload['latency'])
+                logger.info(f"Updated latency to {payload['latency']}ms")
+            
+            # Update Prometheus metrics with new config
+            self._update_prometheus_metrics()
             
             # Acknowledge configuration change
             self.publish_status()
@@ -120,12 +229,16 @@ class IoTNode:
         }
     
     def publish_data(self):
-        """Publish sensor data"""
+        """Publish sensor data and update Prometheus metrics"""
         if not self.config['enabled']:
             return
         
         data = self.generate_sensor_data()
         payload = json.dumps(data)
+        payload_bytes = len(payload.encode())
+        
+        # Simulate latency
+        time.sleep(self.config['latency'] / 1000.0)
         
         result = self.client.publish(
             self.data_topic,
@@ -134,10 +247,17 @@ class IoTNode:
         )
         
         if result.rc == mqtt.MQTT_ERR_SUCCESS:
-            messages_sent.inc()
-            bandwidth_usage.set(len(payload.encode()))
-            sensor_value.set(data['temperature'])
-            logger.info(f"Published: {data['temperature']}°C")
+            # Update Prometheus metrics
+            mqtt_messages_published_total.labels(node_id=self.node_id).inc()
+            node_bytes_sent_total.labels(node_id=self.node_id).inc(payload_bytes)
+            
+            # Update sensor gauges
+            iot_temperature_celsius.labels(node_id=self.node_id).set(data['temperature'])
+            iot_humidity_percent.labels(node_id=self.node_id).set(data['humidity'])
+            iot_pressure_hpa.labels(node_id=self.node_id).set(data['pressure'])
+            iot_battery_percent.labels(node_id=self.node_id).set(data['battery'])
+            
+            logger.info(f"Published: {data['temperature']}°C, QoS={self.config['qos']}")
         else:
             logger.error(f"Failed to publish data: {result.rc}")
     
