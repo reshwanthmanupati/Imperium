@@ -12,3 +12,25 @@ scrape_configs:
     static_configs:
       - targets: ["localhost:9090"]
     metrics_path: "/metrics"
+
+  # IoT Node Simulators - Scrape metrics from each node
+  - job_name: "iot-nodes"
+    static_configs:
+      - targets:
+          - "imperium-iot-node-1:8001"
+          - "imperium-iot-node-2:8002"
+          - "imperium-iot-node-3:8003"
+          - "imperium-iot-node-4:8004"
+          - "imperium-iot-node-5:8005"
+          - "imperium-iot-node-6:8006"
+          - "imperium-iot-node-7:8007"
+          - "imperium-iot-node-8:8008"
+          - "imperium-iot-node-9:8009"
+          - "imperium-iot-node-10:8010"
+        labels:
+          group: "iot-simulators"
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: 'imperium-iot-node-(\d+):.*'
+        target_label: node_number
+        replacement: '${1}'
